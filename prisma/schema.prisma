@@ -14,16 +14,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 model User {
-  id          Int      @id @default(autoincrement())
-  email       String   @unique
+  id          Int       @id @default(autoincrement())
+  email       String    @unique
   name        String?
   password    String
-  bio         String?      // new field
-  avatar      String?      // profile image URL
-  phone       String?      // optional
-  address     String?      // optional
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  bio         String?
+  avatar      String?
+  phone       String?
+  address     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relation
+  bookings    Booking[] // 👈 One-to-many relation (user can have many bookings)
 }
 
+model Booking {
+  id             Int       @id @default(autoincrement())
+  userId         Int
+  user           User      @relation(fields: [userId], references: [id])
+
+  guestName      String
+  email          String
+  phone          String
+  checkInDate    DateTime
+  checkOutDate   DateTime
+  numberOfPerson Int       // 👈 added this line
+  status         String    @default("Pending")
+  createdAt      DateTime  @default(now())
+}

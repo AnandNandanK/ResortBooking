@@ -5,6 +5,7 @@ import session from "express-session";
 import passport from "./config/googleAuth.js";
 import authRouter from "./routes/authRouter.js";
 import userRouter from "./routes/userRouter.js";
+import bookingRouter from "./routes/bookingRouter.js";
 
 const app: Application = express();
 
@@ -32,5 +33,6 @@ app.use(passport.session());
 // Routes
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/booking", bookingRouter);
 
 export { app };
