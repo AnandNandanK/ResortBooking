@@ -1,0 +1,36 @@
+import express, { type Application } from "express";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import session from "express-session";
+import passport from "./config/googleAuth.js";
+import authRouter from "./routes/authRouter.js";
+import userRouter from "./routes/userRouter.js";
+
+const app: Application = express();
+
+// Middleware
+app.use(express.json());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || true,
+    credentials: true,
+  })
+);
+
+// ✅ Add session & passport middleware
+app.use(
+  session({
+    secret: process.env.JWT_SECRET || "defaultsecret",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Routes
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/user", userRouter);
+
+export { app };
