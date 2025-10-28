@@ -1,6 +1,10 @@
 import dotenv from "dotenv";
 dotenv.config(); // <-- Load env variables first
 
+import PDFDocument from "pdfkit";
+import QRCode from "qrcode";
+
+
 import type { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
@@ -45,6 +49,8 @@ export const createBooking = async (req: Request, res: Response) => {
     // 5️⃣ Respond success
     return res.status(201).json({
       message: "Booking created successfully",
+      statusCode:200,
+      success:true,
       booking,
     });
   } catch (error) {
@@ -137,3 +143,63 @@ export const getUserBookings = asyncHandler(async (req: Request, res: Response) 
     data: bookings,
   });
 });
+
+
+
+
+
+export const getBookingTicketPDF = async (req: Request, res: Response) => {
+  try {
+    const bookingId = Number(req.params.id);
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // ✅ Ensure FRONTEND_URL is defined
+    const frontendUrl = process.env.FRONTEND_URL || "https://your-default-domain.com";
+
+    const qrCodeDataURL = await QRCode.toDataURL(
+      `${frontendUrl}/verify-booking/${booking.id}`
+    );
+
+    const doc = new PDFDocument({ margin: 50 });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename=booking-${booking.id}.pdf`);
+    doc.pipe(res);
+
+    // 🏝️ Header
+    doc
+      .fontSize(20)
+      .fillColor("#007B7F")
+      .text("🏝️ Gartang Gali Resort - Booking Ticket", { align: "center" })
+      .moveDown(1);
+
+    // 📋 Booking info
+    doc.fontSize(12).fillColor("black");
+    doc.text(`Guest Name: ${booking.guestName}`);
+    doc.text(`Email: ${booking.email}`);
+    doc.text(`Phone: ${booking.phone}`);
+    doc.text(`Check-In: ${new Date(booking.checkInDate).toLocaleString()}`);
+    doc.text(`Check-Out: ${new Date(booking.checkOutDate).toLocaleString()}`);
+    doc.text(`Guests: ${booking.numberOfPerson}`);
+    doc.text(`Status: ${booking.status}`);
+    doc.moveDown(1.5);
+
+    // 📱 Add QR Code
+    const qrImage = qrCodeDataURL.split(",")[1];
+    if (qrImage) {
+      const buffer = Buffer.from(qrImage, "base64");
+      doc.image(buffer, { fit: [150, 150], align: "center" });
+    }
+
+    doc.moveDown(1);
+    doc.text("Scan this QR at check-in to verify your booking", { align: "center" });
+
+    doc.end();
+  } catch (error) {
+    console.error("Error generating booking PDF:", error);
+    return res.status(500).json({ message: "Failed to generate ticket" });
+  }
+};

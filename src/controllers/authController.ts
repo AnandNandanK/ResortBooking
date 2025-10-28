@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
@@ -63,6 +63,88 @@ export const registerUser = asyncHandler(async (req: Request, res: Response) => 
   });
 });
 
+
+
+
+interface CreateAdminDT {
+  name: string;
+  email: string;
+  password: string;
+  role?: Role; // optional: can create ADMIN or SUPER_ADMIN
+}
+
+export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
+  const { name, email, password, role }: CreateAdminDT = req.body;
+
+  // 1️⃣ Validate input
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide name, email, and password",
+    });
+  }
+
+  // 2️⃣ Verify requester (must be Super Admin)
+  const requesterId = (req as any).userId; // set by your auth middleware
+
+  if (!requesterId) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized: Please login as Super Admin",
+    });
+  }
+
+  const requester = await prisma.user.findUnique({
+    where: { id: requesterId },
+  });
+
+  if (!requester || requester.role !== Role.SUPER_ADMIN) {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied: Only Super Admins can create admins",
+    });
+  }
+
+  // 3️⃣ Check if email already exists
+  const existingUser = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() },
+  });
+
+  if (existingUser) {
+    return res.status(409).json({
+      success: false,
+      message: "User with this email already exists",
+    });
+  }
+
+  // 4️⃣ Hash password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // 5️⃣ Assign role — default ADMIN if not provided
+  const finalRole = role && role === Role.SUPER_ADMIN ? Role.SUPER_ADMIN : Role.ADMIN;
+
+  // 6️⃣ Create new Admin
+  const newAdmin = await prisma.user.create({
+    data: {
+      name,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      role: finalRole,
+    },
+  });
+
+  // 7️⃣ Respond
+  res.status(201).json({
+    success: true,
+    message: `${finalRole} account created successfully`,
+    data: {
+      id: newAdmin.id,
+      name: newAdmin.name,
+      email: newAdmin.email,
+      role: newAdmin.role,
+    },
+  });
+});
 
 
 

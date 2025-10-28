@@ -1,12 +1,14 @@
 import { Router } from "express";
-import {  loginUser, logoutUser, registerUser } from "../controllers/authController.js";
+import {  createAdmin, loginUser, logoutUser, registerUser } from "../controllers/authController.js";
 import passport from "../config/googleAuth.js";
 import jwt from "jsonwebtoken";
 import type { User } from "@prisma/client";
+import { isAuthenticated } from "../middlewares/auth.js";
 
 const router = Router();
 
 router.post("/register", registerUser);
+router.post("/createadmin",isAuthenticated,createAdmin);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 
