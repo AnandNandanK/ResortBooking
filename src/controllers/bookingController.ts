@@ -147,7 +147,6 @@ export const getUserBookings = asyncHandler(async (req: Request, res: Response) 
 
 
 
-
 export const getBookingTicketPDF = async (req: Request, res: Response) => {
   try {
     const bookingId = Number(req.params.id);
@@ -173,7 +172,7 @@ export const getBookingTicketPDF = async (req: Request, res: Response) => {
     doc
       .fontSize(20)
       .fillColor("#007B7F")
-      .text("🏝️ Gartang Gali Resort - Booking Ticket", { align: "center" })
+      .text("Gartang Gali Resort - Booking Ticket", { align: "center" })
       .moveDown(1);
 
     // 📋 Booking info

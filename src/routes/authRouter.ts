@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {  createAdmin, loginUser, logoutUser, registerUser } from "../controllers/authController.js";
+import {  createAdmin, loginUser, logoutUser, registerUser, resetPassword, sendForgotPasswordOTP, verifyForgotPasswordOTP } from "../controllers/authController.js";
 import passport from "../config/googleAuth.js";
 import jwt from "jsonwebtoken";
 import type { User } from "@prisma/client";
@@ -11,6 +11,10 @@ router.post("/register", registerUser);
 router.post("/createadmin",isAuthenticated,createAdmin);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
+
+router.post("/forgot-password", sendForgotPasswordOTP);
+router.post("/verify-otp", verifyForgotPasswordOTP);
+router.post("/reset-password", resetPassword);
 
 
 router.get(

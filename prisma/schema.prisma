@@ -35,6 +35,11 @@ model User {
 
   // Relation
   bookings    Booking[] // 👈 One-to-many relation (user can have many bookings)
+
+    // 👇 Add these fields for OTP flow
+  resetOtp        String?   
+  resetOtpExpiry  DateTime? 
+  resetOtpVerified Boolean? @default(false)
 }
 
 model Booking {
