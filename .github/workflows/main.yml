@@ -1,0 +1,41 @@
+name: Build & Deploy Gartanggali
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build React App
+        run: npm run build
+        env:
+          VITE_BASE_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Remove old dist folder (if exists)
+        run: |
+          if [ -d /var/www/html/gartanggali/dist ]; then
+            echo "Old dist folder found. Removing..."
+            rm -rf /var/www/html/gartanggali/dist
+          else
+            echo "No old dist folder found. Skipping removal."
+          fi
+
+      - name: Deploy new dist folder
+        run: |
+          if [ -d dist ]; then
+            echo "New build found. Copying dist folder..."
+            cp -r dist /var/www/html/gartanggali/
+          else
+            echo "Build folder 'dist' not found. Skipping deployment."
+            exit 1
+          fi
