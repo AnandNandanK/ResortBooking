@@ -26,7 +26,7 @@ export const createBooking = async (req: Request, res: Response) => {
     // 3️⃣ Extract data from request body
     const { guestName, email, phone, checkInDate, checkOutDate, numberOfPerson } = req.body;
 
-    if (!guestName || !email || !phone || !checkInDate || !checkOutDate || ! numberOfPerson) {
+    if (!guestName || !email || !phone || !checkInDate || !checkOutDate || !numberOfPerson) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -37,20 +37,20 @@ export const createBooking = async (req: Request, res: Response) => {
         guestName,
         email,
         phone,
-       numberOfPerson: Number(numberOfPerson),
-        checkInDate: new Date(checkInDate), 
+        numberOfPerson: Number(numberOfPerson),
+        checkInDate: new Date(checkInDate),
         checkOutDate: new Date(checkOutDate),
         status: "success", // default
       },
     });
 
-    
+
 
     // 5️⃣ Respond success
     return res.status(201).json({
       message: "Booking created successfully",
-      statusCode:200,
-      success:true,
+      statusCode: 200,
+      success: true,
       booking,
     });
   } catch (error) {
@@ -98,6 +98,7 @@ export const getAllBookings = asyncHandler(async (req: Request, res: Response) =
     data: bookings,
   });
 });
+
 
 export const getUserBookings = asyncHandler(async (req: Request, res: Response) => {
   // 1️⃣ Get token from cookies
@@ -156,13 +157,20 @@ export const getBookingTicketPDF = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
+    const token = jwt.sign(
+      { bookingId: booking.id, email: booking.email },
+      process.env.SECRET_KEY!,
+      { expiresIn: "2d" }  // Token valid for 2 days
+    );
+
+
     // ✅ Ensure FRONTEND_URL is defined
     const frontendUrl = process.env.FRONTEND_URL || "https://your-default-domain.com";
 
     const qrCodeDataURL = await QRCode.toDataURL(
-      `${frontendUrl}/verify-booking/${booking.id}`
+      `${frontendUrl}/verify-booking/${token}`
     );
-
+    
     const doc = new PDFDocument({ margin: 50 });
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename=booking-${booking.id}.pdf`);
@@ -186,6 +194,7 @@ export const getBookingTicketPDF = async (req: Request, res: Response) => {
     doc.text(`Status: ${booking.status}`);
     doc.moveDown(1.5);
 
+
     // 📱 Add QR Code
     const qrImage = qrCodeDataURL.split(",")[1];
     if (qrImage) {
@@ -200,5 +209,36 @@ export const getBookingTicketPDF = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error generating booking PDF:", error);
     return res.status(500).json({ message: "Failed to generate ticket" });
+  }
+};
+
+
+
+
+export const verifyBooking = async (req: Request, res: Response) => {
+  try {
+    const token = req.query.token as string;
+
+    if (!token) {
+      return res.status(400).json({ message: "Token is missing" });
+    }
+
+    // ✅ Verify JWT
+    const decoded = jwt.verify(token, process.env.SECRET_KEY!) as {
+      bookingId: number;
+      email: string;
+    };
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: decoded.bookingId },
+    });
+
+    if (!booking || booking.email !== decoded.email) {
+      return res.status(404).json({ message: "Invalid or fake booking" });
+    }
+
+    return res.status(200).json({ message: "Booking verified ✅", booking });
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };

@@ -56,3 +56,20 @@ model Booking {
   status         String    @default("Pending")
   createdAt      DateTime  @default(now())
 }
+
+
+model VisitCounter {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  count     BigInt   @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model VisitLog {
+  id           Int      @id @default(autoincrement())
+  key          String
+  visitorHash  String   // hashed IP + UA combo
+  createdAt    DateTime @default(now())
+
+  @@index([key, visitorHash])
+}

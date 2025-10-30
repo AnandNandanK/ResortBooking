@@ -52,3 +52,17 @@ export const isAuthenticated = (
     });
   }
 };
+
+
+export const isAdminOrSuperAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const user = (req as any).user;
+  if (user.role === "admin" || user.role === "super-admin") {
+    next();
+  } else {
+    return res.status(403).json({ message: "Access denied" });
+  }
+};
