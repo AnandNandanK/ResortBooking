@@ -1,35 +1,31 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-      "typeRoots": ["./src/types", "./node_modules/@types"],
-    // File Layout
-    // "rootDir": "./src",
-    // "outDir": "./dist",
+    /* File Structure */
+    "rootDir": "src",
+    "outDir": "dist",
 
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
-    "module": "nodenext",
-    "target": "esnext",
-    "types": [],
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
+    /* Module + Target */
+    "module": "NodeNext",       // for ESM in Node.js
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",         // modern JS for Node 18+
+    "lib": ["ES2022"],          // enable modern APIs
 
-    // Other Outputs
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
+    /* Types */
+    "types": ["node"],          // enable Node.js types
+    "esModuleInterop": true,    // allow default import from CJS
+    "allowSyntheticDefaultImports": true,
 
-    // Stricter Typechecking Options
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    /* Strictness (recommended) */
     "strict": true,
-    "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-  }
+
+    /* Output */
+    "declaration": true,        // generate .d.ts for type safety
+    "sourceMap": true           // for debugging
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }
