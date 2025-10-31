@@ -14,7 +14,7 @@ const prisma = new PrismaClient();
 const googleOptions: StrategyOptions = {
   clientID: process.env.GOOGLE_CLIENT_ID!,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  callbackURL: "/api/v1/auth/google/callback",
+  callbackURL: "https://www.gartanggali.com/backend/api/v1/auth/google/callback",
   passReqToCallback: false, // explicitly set this
 };
 
