@@ -18,6 +18,7 @@ const googleOptions: StrategyOptions = {
   passReqToCallback: false, // explicitly set this
 };
 
+
 passport.use(
   // ✅ Force TypeScript to use the right overload
   new (GoogleStrategy as new (

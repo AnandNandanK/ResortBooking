@@ -20,18 +20,17 @@ app.use(cookieParser());
 //   })
 // );
 
-const allowedOrigins=process.env.CLIENT_URL?.split(",");
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins!.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+const whitelistOrigins = process.env.CLIENT_URL?.split(",");
+const corsOptions = {
+  origin: whitelistOrigins,
   credentials: true,
-}));
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+console.log("Allowed origins are:", whitelistOrigins);
+app.use(cors(corsOptions));
+
+
 
 
 // ✅ Add session & passport middleware
