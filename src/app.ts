@@ -38,4 +38,9 @@ app.use("/api/v1/user", userRouter);
 app.use("/api/v1/booking", bookingRouter);
 app.use("/api/visits", visitRouter);
 
+app.get("/health", (req, res) => {
+  res.send("Server is running, Helath is good")
+});
+
+
 export { app };
