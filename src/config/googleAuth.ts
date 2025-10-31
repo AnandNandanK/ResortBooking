@@ -18,6 +18,8 @@ const googleOptions: StrategyOptions = {
   passReqToCallback: false, // explicitly set this
 };
 
+console.log("Google callback URL:", process.env.GOOGLE_CLIENT_ID, googleOptions.callbackURL);
+
 
 passport.use(
   // ✅ Force TypeScript to use the right overload

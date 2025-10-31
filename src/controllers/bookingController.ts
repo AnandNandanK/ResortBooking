@@ -12,6 +12,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 const prisma = new PrismaClient();
 
+
 // ✅ Create new booking
 export const createBooking = async (req: Request, res: Response) => {
   try {
@@ -58,6 +59,7 @@ export const createBooking = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 
 
@@ -165,7 +167,7 @@ export const getBookingTicketPDF = async (req: Request, res: Response) => {
 
 
     // ✅ Ensure FRONTEND_URL is defined
-    const frontendUrl = process.env.FRONTEND_URL || "https://your-default-domain.com";
+    const frontendUrl = process.env.CLIENT_URL || "https://your-default-domain.com";
 
     const qrCodeDataURL = await QRCode.toDataURL(
       `${frontendUrl}/verify-booking/${token}`

@@ -31,7 +31,7 @@ export const isAuthenticated = (
       process.env.JWT_SECRET as string
     ) as JwtPayload & { userId?: number };
 
-    console.log("Decoded JWT:", decoded);
+    // console.log("Decoded JWT:", decoded);
 
     // ✅ Attach userId to request
     if (decoded.userId) {
