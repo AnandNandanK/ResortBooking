@@ -13,12 +13,26 @@ const app: Application = express();
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || true,
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: process.env.CLIENT_URL || true,
+//     credentials: true,
+//   })
+// );
+
+const allowedOrigins=process.env.CLIENT_URL?.split(",");
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins!.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
+
 
 // ✅ Add session & passport middleware
 app.use(
@@ -37,6 +51,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/booking", bookingRouter);
 app.use("/api/visits", visitRouter);
+
 
 app.get("/health", (req, res) => {
   res.send("Server is running, Helath is good")
