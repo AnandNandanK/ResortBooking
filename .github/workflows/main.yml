@@ -1,41 +1,68 @@
-name: Build & Deploy Gartanggali
+name: Deploy Backend Production Gartanggali
 
-on:
+on: 
   push:
-    branches:
-      - main
+    branches: [ main ]
+  workflow_dispatch:
 
+env:
+  DEPLOY_PATH: /home/apps/gartanggalibackend
+  
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout code
+      # 1️⃣ Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2️⃣ Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.16.0
+
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: npm ci
 
-      - name: Build React App
+      # 4️⃣ Build project
+      - name: Build project
         run: npm run build
-        env:
-          VITE_BASE_URL: ${{ secrets.VITE_API_URL }}
 
-      - name: Remove old dist folder (if exists)
+      # 5️⃣ Copy files to deployment folder
+      - name: Copy files to deploy folder
         run: |
-          if [ -d /var/www/html/gartanggali/dist ]; then
-            echo "Old dist folder found. Removing..."
-            rm -rf /var/www/html/gartanggali/dist
-          else
-            echo "No old dist folder found. Skipping removal."
-          fi
+          mkdir -p $DEPLOY_PATH/dist
+          mkdir -p $DEPLOY_PATH/prisma
+          rsync -av ./dist/ $DEPLOY_PATH/dist/
+          rsync -av ./prisma/ $DEPLOY_PATH/prisma/
+          rsync -av package.json package-lock.json $DEPLOY_PATH/
 
-      - name: Deploy new dist folder
+      # 6️⃣ Install production dependencies
+      - name: Install production dependencies
         run: |
-          if [ -d dist ]; then
-            echo "New build found. Copying dist folder..."
-            cp -r dist /var/www/html/gartanggali/
-          else
-            echo "Build folder 'dist' not found. Skipping deployment."
-            exit 1
-          fi
+          cd $DEPLOY_PATH
+          npm ci --only=production
+
+      # 7️⃣ Run Prisma migrations
+      - name: Run Prisma migrations
+        run: |
+          cd $DEPLOY_PATH
+          export $(grep -v '^#' .env | xargs)
+          npx prisma migrate deploy
+
+      # 8️⃣ Generate Prisma client
+      - name: Generate Prisma client
+        run: |
+          cd $DEPLOY_PATH
+          export $(grep -v '^#' .env | xargs)
+          npx prisma generate
+
+
+      # 9️⃣ Restart server (using PM2)
+      - name: Restart server
+        run: |
+          cd $DEPLOY_PATH
+          npx pm2 reload gartanggali || npx pm2 start npm --name gartanggali -- start
