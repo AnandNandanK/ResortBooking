@@ -107,6 +107,7 @@ export const getUserBookings = asyncHandler(async (req: Request, res: Response) 
   const token = req.cookies?.token;
   if (!token) return res.status(401).json({ message: "Not authenticated" });
 
+  console.log('JWT SECRET...........',process.env.JWT_SECRET)
   // 2️⃣ Verify token and extract userId
   const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
   const userId = decoded.userId;
@@ -161,7 +162,7 @@ export const getBookingTicketPDF = async (req: Request, res: Response) => {
 
     const token = jwt.sign(
       { bookingId: booking.id, email: booking.email },
-      process.env.SECRET_KEY!,
+      process.env.JWT_SECRET!,
       { expiresIn: "2d" }  // Token valid for 2 days
     );
 
