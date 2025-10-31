@@ -21,7 +21,7 @@ app.use(cookieParser());
 // );
 
 
-const whitelistOrigins = process.env.CLIENT_URL?.split(",");
+const whitelistOrigins = process.env.CORS_URLS?.split(",");
 const corsOptions = {
   origin: whitelistOrigins,
   credentials: true,
