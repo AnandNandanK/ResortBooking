@@ -10,8 +10,7 @@ router.get("/getallbooking", isAuthenticated, getAllBookings);
 router.post("/userbooking", isAuthenticated, getUserBookings);
 router.get("/:id/ticket", isAuthenticated, getBookingTicketPDF);
 
-router.get("/verify", isAuthenticated, isAdminOrSuperAdmin, verifyBooking);
-
+router.get("/verify", isAuthenticated, verifyBooking);
 
 router.get("/date", getBookingsByDate);
 

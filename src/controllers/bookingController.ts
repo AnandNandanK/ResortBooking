@@ -192,7 +192,8 @@ export const getBookingTicketPDF = async (req: Request, res: Response) => {
 
 
     // ✅ Ensure FRONTEND_URL is defined
-    const frontendUrl = process.env.CLIENT_URL || "https://your-default-domain.com";
+    const frontendUrl = process.env.CLIENT_URL;
+    console.log('FRONTEND URL IN BOOKING PDF.......',frontendUrl);
 
     const qrCodeDataURL = await QRCode.toDataURL(
       `${frontendUrl}/verify-booking/${token}`
@@ -240,7 +241,6 @@ export const getBookingTicketPDF = async (req: Request, res: Response) => {
 };
 
 
-
 export const verifyBooking = async (req: Request, res: Response) => {
   try {
     const token = req.query.token as string;
@@ -249,13 +249,13 @@ export const verifyBooking = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Token is missing" });
     }
 
-    // ✅ Verify JWT token
-    const decoded = jwt.verify(token, process.env.SECRET_KEY!) as {
+    // ✅ Verify JWT
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
       bookingId: number;
       email: string;
     };
 
-    // ✅ Find booking from DB
+    // ✅ Find booking
     const booking = await prisma.booking.findUnique({
       where: { id: decoded.bookingId },
     });
@@ -264,9 +264,19 @@ export const verifyBooking = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Invalid or fake booking" });
     }
 
-    // ✅ Just return booking details (no update in DB)
+    // ⚠️ Check if already verified
+    if (booking.isVerified) {  //  1 true
+      return res.status(400).json({ message: "QR already used / booking already verified" });
+    }
+
+    // ✅ Mark as verified now
+    await prisma.booking.update({
+      where: { id: booking.id },
+      data: { isVerified: true },
+    });
+
     return res.status(200).json({
-      message: "Booking verified from backend everythin is correct",
+      message: "Booking verified successfully",
       booking,
     });
 
@@ -275,6 +285,7 @@ export const verifyBooking = async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
+
 
 
 

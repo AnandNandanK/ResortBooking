@@ -60,7 +60,7 @@ export const isAdminOrSuperAdmin = (
   next: NextFunction
 ) => {
   const user = (req as any).user;
-  if (user.role === "admin" || user.role === "super-admin") {
+  if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") {
     next();
   } else {
     return res.status(403).json({ message: "Access denied" });
