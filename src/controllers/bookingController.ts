@@ -266,7 +266,7 @@ export const verifyBooking = async (req: Request, res: Response) => {
 
     // ✅ Just return booking details (no update in DB)
     return res.status(200).json({
-      message: "Booking verified ✅",
+      message: "Booking verified from backend everythin is correct",
       booking,
     });
 
