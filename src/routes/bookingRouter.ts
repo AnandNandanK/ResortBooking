@@ -1,6 +1,6 @@
 import express from "express";
 import { isAdminOrSuperAdmin, isAuthenticated } from "../middlewares/auth.js"; // make sure path is correct
-import { createBooking, getAllBookings, getBookingTicketPDF, getUserBookings, verifyBooking } from "../controllers/bookingController.js";
+import { createBooking, getAllBookings, getBookingsByDate, getBookingTicketPDF, getUserBookings, verifyBooking } from "../controllers/bookingController.js";
 
 const router = express.Router();
 
@@ -11,5 +11,8 @@ router.post("/userbooking", isAuthenticated, getUserBookings);
 router.get("/:id/ticket", isAuthenticated, getBookingTicketPDF);
 
 router.get("/verify", isAuthenticated, isAdminOrSuperAdmin, verifyBooking);
+
+
+router.get("/date", getBookingsByDate);
 
 export default router;

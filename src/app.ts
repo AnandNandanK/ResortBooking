@@ -31,7 +31,6 @@ console.log("Allowed origins are:", whitelistOrigins);
 app.use(cors(corsOptions));
 
 
-
 // ✅ Add session & passport middleware
 app.use(
   session({

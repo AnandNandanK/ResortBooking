@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config(); // <-- Load env variables first
 
-import PDFDocument from "pdfkit";
+import PDFDocument, { end } from "pdfkit";
 import QRCode from "qrcode";
 
 
@@ -60,33 +60,56 @@ export const createBooking = async (req: Request, res: Response) => {
   }
 };
 
-
-
-
-// ✅ Get all bookings with pagination
+// ✅ Get all bookings with pagination and optional date/date-range filter (based on createdAt)
 export const getAllBookings = asyncHandler(async (req: Request, res: Response) => {
-  // Extract pagination params from query
-  const page = parseInt(req.query.page as string) || 1; // current page (default 1)
-  const limit = 10; // number of records per page
-  const skip = (page - 1) * limit; // how many records to skip
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = 10;
+  const skip = (page - 1) * limit;
 
-  // Fetch paginated bookings
+  const { date, startDate, endDate } = req.query as {
+    date?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+
+  console.log("DATE:", date);
+  console.log("START DATE:", startDate);
+  console.log("END DATE:", endDate);
+
+  // ✅ Build dynamic filter
+  let whereClause: any = {};
+
+  if (date) {
+    // Filter for single specific created date
+    const startOfDay = new Date(`${date}T00:00:00.000Z`);
+    const endOfDay = new Date(`${date}T23:59:59.999Z`);
+
+    whereClause.createdAt = {
+      gte: startOfDay,
+      lte: endOfDay,
+    };
+  } else if (startDate && endDate) {
+    // Filter for created date range
+    whereClause.createdAt = {
+      gte: new Date(`${startDate}T00:00:00.000Z`),
+      lte: new Date(`${endDate}T23:59:59.999Z`),
+    };
+  }
+
+  // Fetch bookings
   const [bookings, totalBookings] = await Promise.all([
     prisma.booking.findMany({
       skip,
       take: limit,
+      where: whereClause,
       include: {
         user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+          select: { id: true, name: true, email: true },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "desc" }, // order by created date
     }),
-    prisma.booking.count(),
+    prisma.booking.count({ where: whereClause }),
   ]);
 
   const totalPages = Math.ceil(totalBookings / limit);
@@ -100,6 +123,7 @@ export const getAllBookings = asyncHandler(async (req: Request, res: Response) =
     data: bookings,
   });
 });
+
 
 
 export const getUserBookings = asyncHandler(async (req: Request, res: Response) => {
@@ -217,7 +241,6 @@ export const getBookingTicketPDF = async (req: Request, res: Response) => {
 
 
 
-
 export const verifyBooking = async (req: Request, res: Response) => {
   try {
     const token = req.query.token as string;
@@ -226,12 +249,13 @@ export const verifyBooking = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Token is missing" });
     }
 
-    // ✅ Verify JWT
+    // ✅ Verify JWT token
     const decoded = jwt.verify(token, process.env.SECRET_KEY!) as {
       bookingId: number;
       email: string;
     };
 
+    // ✅ Find booking from DB
     const booking = await prisma.booking.findUnique({
       where: { id: decoded.bookingId },
     });
@@ -240,8 +264,86 @@ export const verifyBooking = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Invalid or fake booking" });
     }
 
-    return res.status(200).json({ message: "Booking verified ✅", booking });
+    // ✅ Just return booking details (no update in DB)
+    return res.status(200).json({
+      message: "Booking verified ✅",
+      booking,
+    });
+
   } catch (error) {
+    console.error("Error verifying booking:", error);
     return res.status(401).json({ message: "Invalid or expired token" });
+  }
+};
+
+
+
+
+export const getBookingsByDate = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { date, startDate, endDate } = req.query as {
+      date?: string;
+      startDate?: string;
+      endDate?: string;
+    };
+
+    let filter: Record<string, any> = {};
+
+    // 🎯 Case 1: Specific date
+    if (date) {
+      const selectedDate = new Date(date);
+      const nextDate = new Date(selectedDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      filter = {
+        checkInDate: {
+          gte: selectedDate,
+          lt: nextDate,
+        },
+      };
+    }
+
+    // 🎯 Case 2: Date range
+    else if (startDate && endDate) {
+      filter = {
+        checkInDate: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      };
+    } else {
+      res.status(400).json({
+        success: false,
+        message: "Please provide either a date or startDate & endDate",
+      });
+      return;
+    }
+
+    // 🔍 Fetch bookings
+    const bookings = await prisma.booking.findMany({
+      where: filter,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { checkInDate: "asc" },
+    });
+
+    res.status(200).json({
+      success: true,
+      count: bookings.length,
+      bookings,
+    });
+  } catch (error) {
+    console.error("Error fetching bookings by date:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching bookings",
+    });
   }
 };
