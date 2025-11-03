@@ -55,7 +55,7 @@ model Booking {
   numberOfPerson Int       // 👈 added this line
   status         String    @default("Pending")
   isVerified      Boolean  @default(false)   
-  
+  @@map("Booking")
   createdAt      DateTime  @default(now())
 }
 
