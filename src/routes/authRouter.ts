@@ -10,7 +10,7 @@ const router = Router();
 router.post("/register", registerUser);
 router.post("/createadmin",isAuthenticated,createAdmin);
 router.post("/login", loginUser);
-router.post("/logout", logoutUser);
+router.post("/logout", isAuthenticated,logoutUser);
 
 router.post("/forgot-password", sendForgotPasswordOTP);
 router.post("/verify-otp", verifyForgotPasswordOTP);

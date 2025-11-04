@@ -12,10 +12,13 @@ const getVisitorHash = (req: Request) => {
   return crypto.createHash("sha256").update(ip + ua).digest("hex");
 };
 
+
 export const hitVisit = async (req: Request, res: Response) => {
   try {
     const key = (req.query.key as string) || "site";
     const visitorHash = getVisitorHash(req);
+
+    console.log("user visited.....")
 
     // check if already visited recently
     const existing = await prisma.visitLog.findFirst({
