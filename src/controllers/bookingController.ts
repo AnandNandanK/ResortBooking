@@ -183,11 +183,12 @@ export const getBookingTicketPDF = async (req: Request, res: Response) => {
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
+    
 
     const token = jwt.sign(
       { bookingId: booking.id, email: booking.email },
       process.env.JWT_SECRET!,
-      { expiresIn: "2d" }  // Token valid for 2 days
+      { expiresIn: "30d" }  // Token valid for 2 days
     );
 
 
