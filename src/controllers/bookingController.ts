@@ -174,7 +174,6 @@ export const getUserBookings = asyncHandler(async (req: Request, res: Response) 
 
 
 
-
 export const getBookingTicketPDF = async (req: Request, res: Response) => {
   try {
     const bookingId = Number(req.params.id);

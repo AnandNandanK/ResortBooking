@@ -66,14 +66,12 @@ export const registerUser = asyncHandler(async (req: Request, res: Response) => 
 
 
 
-
 interface CreateAdminDT {
   name: string;
   email: string;
   password: string;
-  role?: Role; // optional: can create ADMIN or SUPER_ADMIN
+  role?: Role; // ADMIN or SUPER_ADMIN (optional)
 }
-
 
 export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
   const { name, email, password, role }: CreateAdminDT = req.body;
@@ -86,9 +84,8 @@ export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // 2️⃣ Verify requester (must be Super Admin)
+  // 2️⃣ Verify requester (must be SUPER_ADMIN)
   const requesterId = (req as any).userId; // set by your auth middleware
-
   if (!requesterId) {
     return res.status(401).json({
       success: false,
@@ -122,10 +119,15 @@ export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
   // 4️⃣ Hash password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // 5️⃣ Assign role — default ADMIN if not provided
-  const finalRole = role && role === Role.SUPER_ADMIN ? Role.SUPER_ADMIN : Role.ADMIN;
+  // 5️⃣ Assign role — must be ADMIN or SUPER_ADMIN only
+  let finalRole: Role;
+  if (role === Role.SUPER_ADMIN) {
+    finalRole = Role.SUPER_ADMIN;
+  } else {
+    finalRole = Role.ADMIN; // default
+  }
 
-  // 6️⃣ Create new Admin
+  // 6️⃣ Create new Admin or Super Admin
   const newAdmin = await prisma.user.create({
     data: {
       name,
@@ -149,6 +151,44 @@ export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
+
+
+
+
+// ✅ GET /api/admin/all?role=ADMIN or SUPER_ADMIN (optional)
+export const getAdmins = asyncHandler(async (req: Request, res: Response) => {
+  const { role } = req.query;
+
+  // 1️⃣ Build filter
+  let filter: any = {
+    OR: [{ role: Role.ADMIN }, { role: Role.SUPER_ADMIN }],
+  };
+
+  // 2️⃣ If role param is given, narrow it down
+  if (role && (role === "ADMIN" || role === "SUPER_ADMIN")) {
+    filter = { role };
+  }
+
+  // 3️⃣ Query DB
+  const admins = await prisma.user.findMany({
+    where: filter,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // 4️⃣ Respond
+  res.status(200).json({
+    success: true,
+    count: admins.length,
+    admins,
+  });
+});
 
 
 
